@@ -12,60 +12,44 @@ per lo sviluppo di avventure testuali interattive ispirate ai classici come Zork
 Modulo principale del loop di gioco (Game Loop) per TextDungeonLib.
 """
 
-from . import state, parser, commands
+import textdungeonlib.state as state
+import textdungeonlib.parser as parser
+import textdungeonlib.commands as commands
 
-def avvia_gioco():
-    """Avvia la sessione di gioco."""
-    if not state.stanza_corrente:
-        print("Errore: Nessuna stanza iniziale impostata.")
-        return
+def avvia_ciclo_gioco():
+    """Gestisce il ciclo principale di input/output (Game Loop)."""
+    # Mostra la descrizione della stanza iniziale all'avvio
+    commands.esegui_guarda()
     
-    print("=" * 60)
-    print(" TEXTDUNGEONLIB - Avventura Testuale")
-    print(" Scrivi 'aiuto' per l'elenco dei comandi o 'esci' per terminare.")
-    print("=" * 60)
-    
-    commands.mostra_descrizione_stanza()
-    
-    while state.gioco_in_corso:
+    while state.gioco_actvo:
         try:
-            input_utente = input("\n> ")
-            esegui_turno(input_utente)
+            stringa_utente = input("\n> ")
+            azione, argomento = parser.analizza_input(stringa_utente)
+            
+            if not azione:
+                continue
+                
+            if azione == "vai":
+                commands.esegui_vai(argomento)
+            elif azione == "guarda":
+                commands.esegui_guarda(argomento)
+            elif azione == "prendi":
+                commands.esegui_prendi(argomento)
+            elif azione == "lascia":
+                commands.esegui_lascia(argomento)
+            elif azione == "inventario":
+                commands.esegui_inventario()
+            elif azione == "usa":
+                commands.esegui_usa(argomento)
+            elif azione == "aiuto":
+                commands.mostra_aiuto()
+            elif azione == "esci":
+                print("Grazie per aver giocato!")
+                state.gioco_attivo = False
+            else:
+                print("Comando non riconosciuto. Scrivi 'aiuto' per i comandi.")
+                
         except (KeyboardInterrupt, EOFError):
-            print("\nPartita interrotta.")
-            break
-
-def esegui_turno(input_utente):
-    """Gestisce un singolo turno del giocatore."""
-    comando, argomento = parser.analizza_input(input_utente)
-    
-    if not comando:
-        return
-    
-    if comando == "fine":
-        print("Grazie per aver giocato! Alla prossima.")
-        state.gioco_in_corso = False
-    elif comando == "vai":
-        commands.esegui_vai(argomento)
-    elif comando == "guarda":
-        commands.esegui_guarda(argomento)
-    elif comando == "prendi":
-        commands.esegui_prendi(argomento)
-    elif comando == "lascia":
-        commands.esegui_lascia(argomento)
-    elif comando == "inventario":
-        commands.esegui_inventario()
-    elif comando == "usa":
-        commands.esegui_usa(argomento)
-    elif comando == "aiuto":
-        mostra_aiuto()
-    else:
-        print("Non ho capito cosa vuoi fare. Scrivi 'aiuto' per le azioni disponibili.")
-
-def mostra_aiuto():
-    """Stampa l'elenco delle istruzioni di base."""
-    print("\n--- COMANDI DISPONIBILI ---")
-    print(" Movimento:  nord, sud, est, ovest, alto, basso (o n, s, e, o, a, b)")
-    print(" Azioni:     guarda [oggetto], prendi [oggetto], lascia [oggetto]")
-    print(" Altri:      usa [oggetto], inventario, aiuto, esci")
-    print("---------------------------")
+            print("\nPartita interrotta. Alla prossima!")
+            state.gioco_attivo = False
+            

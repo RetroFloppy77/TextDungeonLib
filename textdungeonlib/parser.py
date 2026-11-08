@@ -12,39 +12,37 @@ per lo sviluppo di avventure testuali interattive ispirate ai classici come Zork
 Modulo per l'analisi del testo (Parsing) immesso dall'utente.
 """
 
-SINONIMI_DIREZIONI = {
-    "n": "nord", "nord": "nord",
-    "s": "sud", "sud": "sud",
-    "e": "est", "est": "est",
-    "o": "ovest", "ovest": "ovest", "w": "ovest",
-    "a": "alto", "alto": "alto", "su": "alto",
-    "b": "basso", "basso": "basso", "giu": "basso", "giù": "basso",
-    "dentro": "dentro", "entra": "dentro",
-    "fuori": "fuori", "esci": "fuori"
+# Mappa dei sinonimi e abbreviazioni per uniformare l'input dell'utente
+SINONIMI = {
+    "n": "nord", "s": "sud", "e": "est", "o": "ovest",
+    "vai": "vai", "vai a": "vai", "cammina": "vai",
+    "g": "guarda", "esamina": "guarda", "l": "guarda",
+    "i": "inventario", "inv": "inventario",
+    "raccogli": "prendi", "p": "prendi",
+    "posa": "lascia", "scarta": "lascia",
+    "utilizza": "usa",
+    "help": "aiuto",
+    "quit": "esci", "fine": "esci"
 }
 
-SINONIMI_COMANDI = {
-    "guarda": "guarda", "g": "guarda", "esamina": "guarda", "l": "guarda",
-    "prendi": "prendi", "raccogli": "prendi", "p": "prendi",
-    "lascia": "lascia", "posa": "lascia", "scarta": "lascia",
-    "inventario": "inventario", "i": "inventario", "inv": "inventario",
-    "usa": "usa", "utilizza": "usa",
-    "apri": "apri", "chiudi": "chiudi", "leggi": "leggi",
-    "accendi": "accendi", "spegni": "spegni",
-    "aiuto": "aiuto", "help": "aiuto",
-    "esci": "fine", "quit": "fine", "fine": "fine"
-}
-
-def analizza_input(testo):
-    """Pulisce e analizza la frase inserita dall'utente. Restituisce (comando, argomento)."""
-    parole = testo.strip().lower().split()
+def analizza_input(stringa_input):
+    """Pulisce l'input e lo divide in (azione, argomento)."""
+    # Rimuove spazi extra e converte in minuscolo
+    parole = stringa_input.strip().lower().split()
+    
     if not parole:
-        return ("", "")
-    
+        return None, None
+        
     prima_parola = parole[0]
-    if prima_parola in SINONIMI_DIREZIONI:
-        return ("vai", SINONIMI_DIREZIONI[prima_parola])
     
-    comando = SINONIMI_COMANDI.get(prima_parola, prima_parola)
-    argomento = " ".join(parole[1:]) if len(parole) > 1 else ""
-    return (comando, argomento)
+    # Controlla se la prima parola è un comando diretto o un sinonimo
+    azione = SINONIMI.get(prima_parola, prima_parola)
+    
+    # Se l'azione è direttamente una direzione (es: "nord"), la trasformiamo in "vai nord"
+    if azione in ["nord", "sud", "est", "ovest"]:
+        return "vai", azione
+        
+    # Ricostruisce l'argomento se composto da più parole (es: "chiave dorata")
+    argomento = " ".join(parole[1:]) if len(parole) > 1 else None
+    
+    return azione, argomento

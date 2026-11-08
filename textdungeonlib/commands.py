@@ -12,153 +12,118 @@ per lo sviluppo di avventure testuali interattive ispirate ai classici come Zork
 Modulo di gestione ed esecuzione dei comandi di gioco.
 """
 
-from . import state
-
-def mostra_descrizione_stanza():
-    """Stampa a schermo la descrizione della stanza corrente e gli oggetti visibili."""
-    stanza = state.stanze.get(state.stanza_corrente)
-    if not stanza:
-        print("Ti trovi nel nulla assoluto...")
-        return
-    
-    print(f"\n=== {stanza['titolo']} ===")
-    print(stanza["descrizione"])
-    
-    oggetti_visibili = []
-    for id_obj in stanza["oggetti"]:
-        obj = state.oggetti.get(id_obj)
-        if obj and obj["visibile"]:
-            oggetti_visibili.append(obj["nome"])
-    
-    if oggetti_visibili:
-        print("\nQui puoi vedere:")
-        for nome_obj in oggetti_visibili:
-            print(f" - {nome_obj}")
-            
-    uscite = list(stanza["uscite"].keys())
-    if uscite:
-        print(f"\nUscite disponibili: {', '.join(uscite)}")
-    else:
-        print("\nNon sembrano esserci uscite evidenti.")
+import textdungeonlib.state as state
 
 def esegui_vai(direzione):
-    """Sposta il giocatore in una stanza adiacente."""
-    stanza = state.stanze.get(state.stanza_corrente)
+    """Sposta il giocatore tra le stanze gestendo eventuali blocchi."""
     if not direzione:
-        print("In quale direzione vuoi andare?")
+        print("Dove vuoi andare? (es: vai nord)")
         return
-    
-    chiave_azione = (state.stanza_corrente, f"vai_{direzione}")
-    if chiave_azione in state.mappa_azioni:
-        esito = state.mappa_azioni[chiave_azione]()
-        if esito is False:
-            return
 
-    if direzione in stanza["uscite"]:
-        state.stanza_corrente = stanza["uscite"][direzione]
-        mostra_descrizione_stanza()
+    stanza = state.stanze[state.stanza_corrente]
+    
+    # Verifica se la direzione esiste
+    if direzione not in stanza["collegamenti"]:
+        print(f"Non puoi andare a {direzione} da qui.")
+        return
+        
+    # Verifica se il passaggio è bloccato da un enigma/oggetto
+    if direzione in stanza.get("collegamenti_bloccati", {}):
+        blocco = stanza["collegamenti_bloccati"][direzione]
+        print(blocco.get("messaggio_blocco", "Il passaggio è bloccato."))
+        return
+        
+    # Cambia stanza
+    state.stanza_corrente = stanza["collegamenti"][direzione]
+    esegui_guarda()
+
+def esegui_guarda(oggetto=None):
+    """Esamina la stanza corrente o un oggetto specifico."""
+    stanza = state.stanze[state.stanza_corrente]
+    
+    if not oggetto:
+        # Descrizione dell'ambiente
+        print(f"\n--- {state.stanza_corrente.replace('_', ' ').title()} ---")
+        print(stanza["descrizione"])
+        if stanza["oggetti"]:
+            print(f"In questa stanza vedi: {', '.join(stanza['oggetti'])}")
     else:
-        print(f"Non puoi andare a '{direzione}'.")
+        # Esame di un oggetto nell'ambiente o nell'inventario
+        if oggetto in state.inventario or oggetto in stanza["oggetti"]:
+            print(f"Esamini '{oggetto}', ma non noti nulla di insolito.")
+        else:
+            print(f"Non vedi alcun '{oggetto}' qui.")
 
-def esegui_guarda(bersaglio):
-    """Esamina l'ambiente o un oggetto specifico."""
-    if not bersaglio:
-        mostra_descrizione_stanza()
+def esegui_prendi(oggetto):
+    """Raccoglie un oggetto dalla stanza e lo mette nell'inventario."""
+    if not oggetto:
+        print("Cosa vuoi prendere?")
         return
-    
-    for id_obj in state.inventario:
-        obj = state.oggetti[id_obj]
-        if bersaglio in obj["nome"].lower():
-            print(obj["descrizione"])
-            return
-            
+        
     stanza = state.stanze[state.stanza_corrente]
-    for id_obj in stanza["oggetti"]:
-        obj = state.oggetti[id_obj]
-        if obj["visibile"] and bersaglio in obj["nome"].lower():
-            print(obj["descrizione"])
-            return
+    if oggetto in stanza["oggetti"]:
+        stanza["oggetti"].remove(oggetto)
+        state.inventario.append(oggetto)
+        print(f"Hai preso: {oggetto}.")
+    else:
+        print(f"Non c'è nessun '{oggetto}' in questa stanza.")
 
-    print(f"Non vedi alcun '{bersaglio}' qui intorno.")
-
-def esegui_prendi(nome_oggetto):
-    """Raccoglie un oggetto dalla stanza e lo aggiunge all'inventario."""
-    if not nome_oggetto:
-        print("Cosa vorresti prendere?")
+def esegui_lascia(oggetto):
+    """Lascia un oggetto dell'inventario nella stanza corrente."""
+    if not oggetto:
+        print("Cosa vuoi lasciare?")
         return
-    
-    stanza = state.stanze[state.stanza_corrente]
-    for id_obj in stanza["oggetti"]:
-        obj = state.oggetti[id_obj]
-        if obj["visibile"] and nome_oggetto in obj["nome"].lower():
-            if not obj["prendibile"]:
-                print(f"Non puoi prendere {obj['nome']}.")
-                return
-            
-            chiave_azione = (id_obj, "prendi")
-            if chiave_azione in state.mappa_azioni:
-                esito = state.mappa_azioni[chiave_azione]()
-                if esito is False:
-                    return
-
-            stanza["oggetti"].remove(id_obj)
-            state.inventario.append(id_obj)
-            print(f"Hai preso: {obj['nome']}.")
-            return
-
-    print(f"Non c'è alcun '{nome_oggetto}' che tu possa prendere.")
-
-def esegui_lascia(nome_oggetto):
-    """Rimuove un oggetto dall'inventario e lo posiziona nella stanza."""
-    if not nome_oggetto:
-        print("Cosa vorresti lasciare?")
-        return
-    
-    for id_obj in state.inventario:
-        obj = state.oggetti[id_obj]
-        if nome_oggetto in obj["nome"].lower():
-            state.inventario.remove(id_obj)
-            state.stanze[state.stanza_corrente]["oggetti"].append(id_obj)
-            print(f"Hai lasciato: {obj['nome']}.")
-            return
-
-    print(f"Non possiedi alcun '{nome_oggetto}'.")
+        
+    if oggetto in state.inventario:
+        state.inventario.remove(oggetto)
+        state.stanze[state.stanza_corrente]["oggetti"].append(oggetto)
+        print(f"Hai lasciato: {oggetto}.")
+    else:
+        print(f"Non hai '{oggetto}' nel tuo inventario.")
 
 def esegui_inventario():
-    """Mostra l'elenco degli oggetti nell'inventario."""
-    if not state.inventario:
+    """Mostra gli oggetti trasportati dal giocatore."""
+    if state.inventario:
+        print(f"Nel tuo inventario ci sono: {', '.join(state.inventario)}")
+    else:
         print("Il tuo inventario è vuoto.")
-        return
-    
-    print("\nStai trasportando:")
-    for id_obj in state.inventario:
-        obj = state.oggetti[id_obj]
-        print(f" - {obj['nome']}")
 
-def esegui_usa(nome_oggetto):
-    """Utilizza un oggetto."""
-    if not nome_oggetto:
+def esegui_usa(oggetto):
+    """Usa un oggetto per risolvere enigmi o sbloccare passaggi."""
+    if not oggetto:
         print("Cosa vuoi usare?")
         return
-    
-    id_trovato = None
-    for id_obj in state.inventario:
-        if nome_oggetto in state.oggetti[id_obj]["nome"].lower():
-            id_trovato = id_obj
-            break
-            
-    if not id_trovato:
-        for id_obj in state.stanze[state.stanza_corrente]["oggetti"]:
-            if nome_oggetto in state.oggetti[id_obj]["nome"].lower():
-                id_trovato = id_obj
-                break
-
-    if not id_trovato:
-        print(f"Non hai o non vedi alcun '{nome_oggetto}'.")
+        
+    if oggetto prejudices not in state.inventario:
+        print(f"Non possiedi '{oggetto}'.")
         return
+        
+    stanza = state.stanze[state.stanza_corrente]
+    blocco_rimosso = False
+    
+    # Controlla se l'oggetto sblocca una direzione nella stanza corrente
+    direzioni_da_rimuovere = []
+    for dir_bloccata, info_blocco in stanza.get("collegamenti_bloccati", {}).items():
+        if info_blocco.get("chiave_richiesta") == oggetto:
+            print(f"Hai usato {oggetto}! Un passaggio si è aperto verso {dir_bloccata}.")
+            direzioni_da_rimuovere.append(dir_bloccata)
+            blocco_rimosso = True
+            
+    for dir_bloccata in direzioni_da_rimuovere:
+        del stanza["collegamenti_bloccati"][dir_bloccata]
+        
+    if not blocco_rimosso:
+        print(f"Usi '{oggetto}', ma non succede nulla qui.")
 
-    chiave_azione = (id_trovato, "usa")
-    if chiave_azione in state.mappa_azioni:
-        state.mappa_azioni[chiave_azione]()
-    else:
-        print(f"Non succede nulla di particolare usando {state.oggetti[id_trovato]['nome']}.")
+def mostra_aiuto():
+    """Mostra la lista dei comandi disponibili."""
+    print("\n--- COMANDI DISPONIBILI ---")
+    print("vai [direzione]  -> Muoviti (nord, sud, est, ovest / n, s, e, o)")
+    print("guarda [oggetto] -> Esamina la stanza o un oggetto specifico")
+    print("prendi [oggetto] -> Raccogli un oggetto da terra")
+    print("lascia [oggetto] -> Deponi un oggetto nella stanza")
+    print("usa [oggetto]    -> Utilizza un oggetto del tuo inventario")
+    print("inventario       -> Mostra gli oggetti che stai trasportando")
+    print("aiuto            -> Mostra questa guida")
+    print("esci             -> Chiudi il gioco")
+    
