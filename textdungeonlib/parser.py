@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""
 
+"""
 Autore: Stefano Peris
 Email: stefanoperis.github@gmail.com
 Versione: 1.0 (Python 3.12)
@@ -8,41 +8,35 @@ Descrizione: Libreria leggera e modulare in Python 3.12.x
 per lo sviluppo di avventure testuali interattive ispirate ai classici come Zork.
 """
 
-"""
-Modulo per l'analisi del testo (Parsing) immesso dall'utente.
-"""
 
-# Mappa dei sinonimi e abbreviazioni per uniformare l'input dell'utente
 SINONIMI = {
     "n": "nord", "s": "sud", "e": "est", "o": "ovest",
-    "vai": "vai", "vai a": "vai", "cammina": "vai",
+    "accendi": "accendi", "attiva": "accendi",
     "g": "guarda", "esamina": "guarda", "l": "guarda",
     "i": "inventario", "inv": "inventario",
     "raccogli": "prendi", "p": "prendi",
-    "posa": "lascia", "scarta": "lascia",
-    "utilizza": "usa",
-    "help": "aiuto",
-    "quit": "esci", "fine": "esci"
+    "apri": "apri", "scassina": "apri",
+    "score": "punteggio", "punti": "punteggio",
+    "help": "aiuto", "quit": "esci", "fine": "esci"
 }
 
+ARTICOLI_E_PREPOSIZIONI = {"il", "lo", "la", "i", "gli", "le", "un", "uno", "una", "del", "della", "di", "con", "a"}
+
 def analizza_input(stringa_input):
-    """Pulisce l'input e lo divide in (azione, argomento)."""
-    # Rimuove spazi extra e converte in minuscolo
+    """Pulisce l'input filtrando il rumore grammaticale ed estrae Azione e Argomento."""
     parole = stringa_input.strip().lower().split()
-    
     if not parole:
         return None, None
-        
-    prima_parola = parole[0]
-    
-    # Controlla se la prima parola è un comando diretto o un sinonimo
+
+    parole_filtrate = [p for p in parole if p not in ARTICOLI_E_PREPOSIZIONI]
+    if not parole_filtrate:
+        return None, None
+
+    prima_parola = parole_filtrate[0]
     azione = SINONIMI.get(prima_parola, prima_parola)
-    
-    # Se l'azione è direttamente una direzione (es: "nord"), la trasformiamo in "vai nord"
+
     if azione in ["nord", "sud", "est", "ovest"]:
         return "vai", azione
-        
-    # Ricostruisce l'argomento se composto da più parole (es: "chiave dorata")
-    argomento = " ".join(parole[1:]) if len(parole) > 1 else None
-    
+
+    argomento = " ".join(parole_filtrate[1:]) if len(parole_filtrate) > 1 else None
     return azione, argomento

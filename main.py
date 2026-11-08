@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""
 
+"""
 Autore: Stefano Peris
 Email: stefanoperis.github@gmail.com
 Versione: 1.0 (Python 3.12)
@@ -8,78 +8,41 @@ Descrizione: Libreria leggera e modulare in Python 3.12.x
 per lo sviluppo di avventure testuali interattive ispirate ai classici come Zork.
 """
 
-"""
-Esempio pratico di un'avventura testuale completa costruita con TextDungeonLib.
-"""
 
-from textdungeonlib import state
-from textdungeonlib import world
-from textdungeonlib import core
+import textdungeonlib as tdl
 
-def aziona_lanterna():
-    """Callback personalizzato per l'uso della lanterna."""
-    lanterna = state.oggetti["lanterna"]
-    if lanterna["stato"].get("accesa", False):
-        lanterna["stato"]["accesa"] = False
-        lanterna["descrizione"] = "Una lanterna di ottone spenta."
-        print("Hai spento la lanterna. Un'ombra fredda ti avvolge.")
-    else:
-        lanterna["stato"]["accesa"] = True
-        lanterna["descrizione"] = "Una lanterna di ottone che emette una calda luce dorata."
-        print("Hai acceso la lanterna. Una brillante luce dorata illumina l'area!")
+# 1. Creiamo le stanze (Superficie luminosa e caverne buie)
+tdl.crea_stanza(
+    id_stanza="superficie",
+    descrizione="Ti trovi davanti a una piccola baracca di mattoni in una valle isolata. Una grata a terra conduce a sud.",
+    collegamenti={"sud": "caverna_buia"}
+)
 
-def aziona_chiave():
-    """Callback personalizzato per sbloccare il cancello con la chiave."""
-    if state.stanza_corrente == "giardino":
-        print("Inserisci la pesante chiave di ferro nella serratura del cancello...")
-        print("Con un cigolio metallico, il cancello si apre verso NORD rivelando un passaggio segreto!")
-        world.connetti_stanze("giardino", "nord", "tempio", bidirezionale=True)
-    else:
-        print("Non c'è nulla da sbloccare con la chiave in questa stanza.")
+tdl.crea_stanza(
+    id_stanza="caverna_buia",
+    descrizione="Sei entrato nel reticolo sotterraneo. Le pareti trasudano acqua. C'è un passaggio a est.",
+    collegamenti={"nord": "superficie", "est": "stanza_del_tesoro"},
+    buia=True,
+    descrizione_buia="È buio pesto. Senti strani squittii ed echi sinistri. Muoversi alla cieca è pericoloso."
+)
 
-def aziona_trofeo():
-    """Callback personalizzato quando si prende il trofeo."""
-    print("Nel momento in cui sollevi il trofeo d'oro, senti un click risuonare nel tempio!")
-    state.punteggio += 100
-    print(f"*** HAI VINTO LA PARTITA! Punteggio finale: {state.punteggio} punti. ***")
-    state.gioco_in_corso = False
+tdl.crea_stanza(
+    id_stanza="stanza_del_tesoro",
+    descrizione="Una magnifica volta sotterranea scintillante! La via d'uscita è a ovest.",
+    collegamenti={"ovest": "caverna_buia"},
+    buia=True
+)
 
-def costruisci_mondo():
-    """Inizializza le stanze, gli oggetti e le connessioni del gioco."""
-    state.inizializza_stato()
-    
-    world.crea_stanza(
-        "atrio",
-        "Atrio della Casa Bianca",
-        "Ti trovi in una stanza spoglia con pareti di legno chiaro. C'è una porta aperta ad EST."
-    )
-    world.crea_stanza(
-        "giardino",
-        "Giardino Recintato",
-        "Un lussureggiante giardino circondato da alte mura. A OVEST torni all'atrio. A NORD c'è un cancello d'acciaio chiuso a chiave."
-    )
-    world.crea_stanza(
-        "tempio",
-        "Tempio Sotterraneo",
-        "Un antico tempio sotterraneo illuminato da strane rune blu. Al centro c'è un altare in marmo."
-    )
-    
-    world.connetti_stanze("atrio", "est", "giardino")
-    
-    world.crea_oggetto("lanterna", "una lanterna di ottone", "Una classica lanterna a olio in ottone.")
-    world.crea_oggetto("chiave", "una chiave di ferro", "Una chiave di ferro massiccio, vecchia e arrugginita.")
-    world.crea_oggetto("trofeo", "un trofeo d'oro", "Un favoloso trofeo dorato tempestato di rubini!", prendibile=True)
-    
-    world.posiziona_oggetto("lanterna", "atrio")
-    world.posiziona_oggetto("chiave", "giardino")
-    world.posiziona_oggetto("trofeo", "tempio")
-    
-    world.registra_azione("lanterna", "usa", aziona_lanterna)
-    world.registra_azione("chiave", "usa", aziona_chiave)
-    world.registra_azione("trofeo", "prendi", aziona_trofeo)
-    
-    world.imposta_stanza_iniziale("atrio")
+# 2. Posizioniamo gli oggetti e i contenitori classici
+tdl.aggiungi_oggetto("superficie", "lanterna", "Una solida lanterna d'ottone vecchio stile.", prendibile=True, luce=True)
+tdl.aggiungi_oggetto("superficie", "chiave", "Una piccola chiave d'acciaio arrugginita.", prendibile=True)
 
-if __name__ == "__main__":
-    costruisci_mondo()
-    core.avvia_gioco()
+tdl.aggiungi_contenitore("stanza_del_tesoro", "forziere", chiuso=True, chiave="chiave")
+tdl.metti_in_contenitore("stanza_del_tesoro", "forziere", "monete", "Un sacchetto pieno di doblò d'oro zecchino!")
+
+# 3. Setup e Inizio Avventura
+tdl.inizializza_gioco(tdl.stanze, "superficie", punti_max=100)
+
+print("COLOSSAL CAVE TEXT DUNGEON")
+print("==========================")
+tdl.avvia_ciclo_gioco()
