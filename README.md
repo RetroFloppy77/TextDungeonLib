@@ -10,16 +10,22 @@ Progettata interamente seguendo il **paradigma di programmazione procedurale** (
 
 ```text
 TextDungeonLib/
-│
-├── 📜 main.py                  # Esempio di gioco completo pronto all'uso
-├── 📖 README.md                # Guida completa e documentazione
-└── 📁 textdungeonlib/          # Pacchetto principale della libreria
-    ├── 📄 __init__.py          # Inizializzatore del pacchetto
-    ├── 📄 state.py             # Stato globale del gioco (stanze, inventario)
-    ├── 📄 world.py             # Funzioni per la creazione di stanze e oggetti
-    ├── 📄 parser.py            # Analizzatore sintattico del testo utente
-    ├── 📄 commands.py          # Esecutore procedurale delle azioni (vai, prendi, usa)
-    └── 📄 core.py              # Ciclo di gioco principale (Game Loop)
+├── 📁 .github/workflows/           # Automazioni e CI/CD con GitHub Actions.
+│   ├── 📄 test.yml                 # Esegue automaticamente i test su Python 3.10-3.13 a ogni push.
+│   └── 📄 release.yml              # Pubblica automaticamente la libreria su PyPI alla creazione di un tag (v*)
+├── 📁 textdungeonlib/              # Pacchetto principale della libreria procedurale.
+│   ├── 📄 __init__.py              # Inizializzatore ed esportatore delle funzioni del pacchetto.
+│   ├── 📄 commands.py              # Esecutore procedurale delle azioni di gioco (movimento, comandi, interazioni)
+│   ├── 📄 core.py                  # Ciclo principale di gioco (Game Loop) e gestione delle meccaniche di luce.
+│   ├── 📄 parser.py                # Analizzatore sintattico per filtrare e pulire l'input testuale dell'utente.
+│   ├── 📄 state.py                 # Gestione dello stato globale (stanze, inventario, turni, punteggio)
+│   └── 📄 world.py                 # Funzioni per la costruzione del mondo di gioco (stanze, oggetti, contenitori)
+├── 📁 tests/                       # Cartella dedicata ai test automatici.
+│   └── 📄 test_parser.py           # Test unitari scritti con pytest per validare il parser testuale.
+├── 📜 main.py                      # Script di esempio completo per l'avvio e la demo del gioco.
+├── 📄 pyproject.toml               # Configurazione di build e metadati del pacchetto Python.
+├── 📖 README.md                    # Documentazione ufficiale e guida all'utilizzo della libreria.
+└── ⚖️ License                      # Licenza open-source MIT del progetto.
 ```
 
 ---
