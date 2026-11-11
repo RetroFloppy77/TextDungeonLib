@@ -9,6 +9,6 @@ per lo sviluppo di avventure testuali interattive ispirate ai classici come Zork
 """
 
 
-from .state import inizializza_gioco, stanze
-from .world import crea_stanza, aggiungi_oggetto, aggiungi_contenitore, metti_in_contenitore
-from .core import avvia_ciclo_gioco
+from textdungeonlib.state import inizializza_gioco, stanze
+from textdungeonlib.world import crea_stanza, aggiungi_oggetto, aggiungi_contenitore, metti_in_contenitore
+from textdungeonlib.core import avvia_ciclo_gioco
